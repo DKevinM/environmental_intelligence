@@ -7,7 +7,7 @@ from modules.weather.codes import label as weather_label
 R={'LOW':'low','MODERATE':'moderate','HIGH':'high','EXTREME':'extreme','UNKNOWN':'unknown'}
 def v(x,s=''):return '—' if x is None else f'{x}{s}'
 MAP_JS='''(function(){
-  var map=L.map('festmap',{scrollWheelZoom:false}).setView([VENUE.lat,VENUE.lon],10);
+  var map=L.map('festmap',{scrollWheelZoom:false}).setView([VENUE.lat,VENUE.lon],13);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'&copy; OpenStreetMap contributors &copy; CARTO',maxZoom:19}).addTo(map);
   function colorForPM25(x){if(x==null)return '#6c757d';if(x<12)return '#2f9e44';if(x<35.4)return '#e0a800';if(x<55.4)return '#e8590c';if(x<150.4)return '#c92a2a';if(x<250.4)return '#862e9c';return '#5c0000';}
   function colorForAQHI(x){if(x==null)return '#6c757d';if(x<=3)return '#2f9e44';if(x<=6)return '#e0a800';if(x<=10)return '#e8590c';return '#c92a2a';}
