@@ -1,0 +1,40 @@
+project:
+  name: Calgary Folk Music Festival Environmental Intelligence
+  timezone: America/Edmonton
+
+data_mode: auto
+
+event:
+  name: Calgary Folk Music Festival
+  venue: Prince's Island Park
+  latitude: 51.0534
+  longitude: -114.0673
+  local_radius_km: 10
+  influence_radius_km: 20
+
+weather:
+  forecast_hours: 24
+  timeout_seconds: 20
+
+air_quality:
+  current_source: "/opt/airquality/github/AB_datapull/data/output/aqhi_station_forecast_3h.csv"
+  forecast_source: "/opt/airquality/github/AB_datapull/data/output/aqhi_station_forecast_3h.csv"
+  blend_grid_file: "/opt/airquality/github/AB_datapull/data/output/AQHI_Alberta_blend.geojson"
+  pollutant_source: "/opt/airquality/github/AB_datapull/data/last6h.csv"
+  purpleair_source: "/opt/airquality/github/AB_datapull/data/AB_PM25_map.json"
+  firesmoke_current_file: "/opt/airquality/github/AB_datapull/data/output/firesmoke_now.geojson"
+  search_radius_km: 30
+  fallback_current_file: data/sample/aqhi_current.geojson
+  fallback_forecast_file: data/sample/aqhi_forecast.json
+
+map:
+  half_degree_bbox: 0.6
+  purpleair_radius_km: 25
+  station_radius_km: 40
+
+thresholds:
+  heat: {moderate_c: 27, high_c: 30, extreme_c: 35}
+  wind_gust_kmh: {moderate: 45, high: 65, extreme: 90}
+  precipitation_probability: {moderate: 40, high: 70}
+  precipitation_mm_hour: {moderate: 2.5, high: 7.5}
+  aqhi: {moderate: 4, high: 7, extreme: 10}
