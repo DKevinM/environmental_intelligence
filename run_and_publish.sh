@@ -1,0 +1,38 @@
+#!/bin/bash
+set -e
+
+cd /opt/airquality/github/event_environmental_intelligence_v1
+source .venv/bin/activate
+
+LOCKFILE="/opt/airquality/locks/environmental_intelligence_git.lock"
+mkdir -p "$(dirname "$LOCKFILE")"
+
+(
+  flock -w 120 200
+  git fetch origin
+  git pull --rebase origin main
+) 200>"$LOCKFILE"
+
+python run_demo.py
+
+cp output/dashboard.html docs/index.html
+
+(
+  flock -w 120 200
+
+  git add docs/index.html
+
+  if git diff --cached --quiet; then
+      echo "No changes to commit."
+      exit 0
+  fi
+
+  git commit -m "chore: refresh sit-rep $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  for attempt in 1 2 3; do
+      if git push origin main; then
+          break
+      fi
+      echo "push rejected (attempt $attempt/3); rebasing onto latest and retrying..."
+      git pull --rebase origin main
+  done
+) 200>"$LOCKFILE"

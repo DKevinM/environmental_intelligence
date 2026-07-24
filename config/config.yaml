@@ -37,4 +37,4 @@ thresholds:
   wind_gust_kmh: {moderate: 45, high: 65, extreme: 90}
   precipitation_probability: {moderate: 40, high: 70}
   precipitation_mm_hour: {moderate: 2.5, high: 7.5}
-  aqhi: {moderate: 4, high: 7, extreme: 10}
+  aqhi: {moderate: 4, high: 7, extreme: 10.01}
