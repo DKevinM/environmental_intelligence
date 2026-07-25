@@ -21,8 +21,13 @@ MAP_JS='''(function(){
   var trajDensityLayer=L.geoJSON(TRAJ_DENSITY,{style:function(f){return {fillColor:colorForDensity(f.properties.count),color:'transparent',fillOpacity:0.35};},onEachFeature:function(f,l){l.bindPopup('Modeled air parcel density<br>count: '+f.properties.count);}});
   var trajLineLayer=L.geoJSON(TRAJ_CENTERLINES,{style:function(){return {color:'#ade8f4',weight:2,dashArray:'6,4'};},onEachFeature:function(f,l){l.bindPopup('Back-trajectory (release height '+(f.properties.z0_m!=null?f.properties.z0_m:'?')+' m)<br>'+(TRAJ_HOURS!=null?TRAJ_HOURS+' h lookback':''));}});
   var venueMarker=L.circleMarker([VENUE.lat,VENUE.lon],{radius:10,color:'#fff',weight:3,fillColor:'#4dabf7',fillOpacity:1}).bindPopup('<b>'+VENUE.name+'</b>'+(VENUE.wind?('<br>Wind: '+VENUE.wind):''));
-  aqhiLayer.addTo(map);smokeLayer.addTo(map);paLayer.addTo(map);stationLayer.addTo(map);fireLayer.addTo(map);trajDensityLayer.addTo(map);trajLineLayer.addTo(map);venueMarker.addTo(map);
-  L.control.layers(null,{'AQHI grid':aqhiLayer,'Smoke (PM2.5 model)':smokeLayer,'Community sensors':paLayer,'Official stations':stationLayer,'Active fires (NASA FIRMS)':fireLayer,'Wind trajectory density':trajDensityLayer,'Wind back-trajectory':trajLineLayer},{collapsed:false}).addTo(map);
+  aqhiLayer.addTo(map);smokeLayer.addTo(map);paLayer.addTo(map);stationLayer.addTo(map);fireLayer.addTo(map);venueMarker.addTo(map);
+  L.control.layers(null,{'AQHI grid':aqhiLayer,'Smoke (PM2.5 model)':smokeLayer,'Community sensors':paLayer,'Official stations':stationLayer,'Active fires (NASA FIRMS)':fireLayer,'Wind trajectory density (zooms out)':trajDensityLayer,'Wind back-trajectory (zooms out)':trajLineLayer},{collapsed:false}).addTo(map);
+  map.on('overlayadd',function(ev){
+    if(ev.name.indexOf('zooms out')===-1)return;
+    var b=(TRAJ_CENTERLINES.features&&TRAJ_CENTERLINES.features.length)?trajLineLayer.getBounds():null;
+    if(b&&b.isValid())map.fitBounds(b.pad(0.25));
+  });
 })();'''
 def build_map_section(cfg,p):
  mp=p.get('map') or {}
