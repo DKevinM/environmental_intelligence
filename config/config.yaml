@@ -32,6 +32,21 @@ map:
   purpleair_radius_km: 25
   station_radius_km: 40
 
+# FIRMS_API_KEY must be set as an environment variable (see /opt/airquality/config/intelligence.env),
+# never committed here - this repo is public.
+firms:
+  base_url: "https://firms.modaps.eosdis.nasa.gov"
+  source: "VIIRS_SNPP_NRT"
+  radius_km: 300
+  cluster_km: 10
+  min_confidence: 0.30
+  day_range: 2
+
+cameras:
+  base_url: "https://511.alberta.ca/api/v2/get/cameras"
+  radius_km: 15
+  max_cameras: 4
+
 thresholds:
   heat: {moderate_c: 27, high_c: 30, extreme_c: 35}
   wind_gust_kmh: {moderate: 45, high: 65, extreme: 90}

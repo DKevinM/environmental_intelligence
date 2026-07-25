@@ -3,6 +3,9 @@ set -e
 
 cd /opt/airquality/github/event_environmental_intelligence_v1
 source .venv/bin/activate
+set -a
+source /opt/airquality/config/intelligence.env
+set +a
 
 LOCKFILE="/opt/airquality/locks/environmental_intelligence_git.lock"
 mkdir -p "$(dirname "$LOCKFILE")"

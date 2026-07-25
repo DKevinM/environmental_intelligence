@@ -2,7 +2,7 @@ from core.geometry import compass
 from core.timefmt import format_short
 from core.aqhi import cap_str as faqhi, eccc_messages
 def f(v,d=0):return 'unavailable' if v is None else f'{v:.{d}f}'
-def build(cfg,w,aq,fx,a):
+def build(cfg,w,aq,fx,a,fire=None):
  c=w['current']; m=a['weather_metrics']; h=a['hazards']; parts=[f"At {cfg['event']['name']}, temperature is {f(c.get('temperature_c'),1)}°C and feels near {f(c.get('apparent_temperature_c'),1)}°C. Winds are {f(c.get('wind_speed_kmh'))} km/h from {compass(c.get('wind_direction_deg'))}, gusting near {f(c.get('wind_gust_kmh'))} km/h."]
  tz=cfg['project'].get('timezone','America/Edmonton')
  parts.append(f"The nearest current AQHI is {faqhi(aq.get('aqhi'))} at {aq.get('station_name','the nearest point')}, {f(aq.get('distance_km'),1)} km from the venue." if aq.get('aqhi') is not None else 'A valid current AQHI was not available.')
@@ -16,6 +16,12 @@ def build(cfg,w,aq,fx,a):
   parts.append(f"{loc.capitalize()} community sensor ('{pa.get('name')}', {f(pa.get('distance_km'),1)} km) reads {f(pa.get('pm25'),1)} µg/m³ PM2.5.")
  wd=c.get('wind_direction_deg')
  if wd is not None:parts.append(f"Surface winds are moving from the {compass(wd)} toward the {compass((wd+180)%360)}, the direction smoke and particulate matter are likely being carried across the area.")
+ nearest_fire=(fire or {}).get('nearest')
+ if nearest_fire:
+  diff=abs(nearest_fire['bearing_deg']-wd) if wd is not None else None
+  upwind=diff is not None and min(diff,360-diff)<=45
+  align=' This fire is roughly upwind of the venue, so smoke transport toward the site is plausible.' if upwind else ''
+  parts.append(f"The nearest active fire detection (satellite, last {nearest_fire.get('acq_date','—')}) is {nearest_fire['distance_km']} km {nearest_fire['direction']} of the venue.{align}")
  if fx.get('plus_3h') is not None:
   when=format_short(fx.get('valid_at'),tz)
   parts.append(f"The AQHI forecast for {when or 'the next few hours'} is {faqhi(fx.get('plus_3h'))}.")
