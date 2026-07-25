@@ -2,6 +2,9 @@ from core.geometry import compass
 from core.timefmt import format_short
 from core.aqhi import cap_str as faqhi, eccc_messages
 def f(v,d=0):return 'unavailable' if v is None else f'{v:.{d}f}'
+def sensor_label(source):
+    fam=(source or '').split('_')[0]
+    return {'VIIRS':'NASA FIRMS – VIIRS','MODIS':'NASA FIRMS – MODIS','LANDSAT':'NASA FIRMS – Landsat'}.get(fam,'NASA FIRMS' if not fam else f'NASA FIRMS – {fam}')
 def build(cfg,w,aq,fx,a,fire=None):
  c=w['current']; m=a['weather_metrics']; h=a['hazards']; parts=[f"At {cfg['event']['name']}, temperature is {f(c.get('temperature_c'),1)}°C and feels near {f(c.get('apparent_temperature_c'),1)}°C. Winds are {f(c.get('wind_speed_kmh'))} km/h from {compass(c.get('wind_direction_deg'))}, gusting near {f(c.get('wind_gust_kmh'))} km/h."]
  tz=cfg['project'].get('timezone','America/Edmonton')
@@ -21,7 +24,7 @@ def build(cfg,w,aq,fx,a,fire=None):
   diff=abs(nearest_fire['bearing_deg']-wd) if wd is not None else None
   upwind=diff is not None and min(diff,360-diff)<=45
   align=' This fire is roughly upwind of the venue, so smoke transport toward the site is plausible.' if upwind else ''
-  parts.append(f"The nearest active fire detection (satellite, last {nearest_fire.get('acq_date','—')}) is {nearest_fire['distance_km']} km {nearest_fire['direction']} of the venue.{align}")
+  parts.append(f"The nearest active fire detection ({sensor_label(cfg.get('firms',{}).get('source'))}, last {nearest_fire.get('acq_date','—')}) is {nearest_fire['distance_km']} km {nearest_fire['direction']} of the venue.{align}")
  if fx.get('plus_3h') is not None:
   when=format_short(fx.get('valid_at'),tz)
   parts.append(f"The AQHI forecast for {when or 'the next few hours'} is {faqhi(fx.get('plus_3h'))}.")
