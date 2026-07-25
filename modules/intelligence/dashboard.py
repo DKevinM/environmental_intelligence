@@ -17,9 +17,12 @@ MAP_JS='''(function(){
   var paLayer=L.layerGroup(PURPLEAIR.map(function(p){var onsite=p.distance_km<1;return L.circleMarker([p.lat,p.lon],{radius:onsite?9:6,color:'#fff',weight:onsite?2:1,fillColor:colorForPM25(p.pm25),fillOpacity:0.9}).bindPopup('<b>'+p.name+'</b><br>PM2.5: '+(p.pm25!=null?p.pm25:'n/a')+' &micro;g/m&sup3;<br>'+p.distance_km+' km from venue'+(onsite?' &middot; on-site':''));}));
   var stationLayer=L.layerGroup(STATIONS.map(function(s){return L.circleMarker([s.lat,s.lon],{radius:8,color:'#fff',weight:2,fillColor:colorForAQHI(s.aqhi),fillOpacity:0.95}).bindPopup('<b>'+s.name+'</b><br>AQHI now: '+capAQHI(s.aqhi)+'<br>+3h: '+capAQHI(s.aqhi_3h!=null?+s.aqhi_3h.toFixed(1):null)+'<br>'+s.distance_km+' km from venue');}));
   var fireLayer=L.layerGroup(FIRE.map(function(f){return L.circleMarker([f.lat,f.lon],{radius:7,color:'#fff',weight:1,fillColor:'#ff6b35',fillOpacity:0.9}).bindPopup('Active fire detection (NASA FIRMS &ndash; VIIRS)<br>'+f.distance_km+' km '+f.direction+' of venue<br>FRP: '+(f.frp!=null?f.frp:'n/a')+' MW &middot; confidence: '+(f.confidence||'n/a')+'<br>Detected: '+f.acq_date+' '+f.acq_time+' UTC');}));
+  function colorForDensity(x){if(x==null)return '#6c757d';if(x<50)return '#3d5a80cc';if(x<150)return '#5390d9';if(x<300)return '#48cae4';return '#ade8f4';}
+  var trajDensityLayer=L.geoJSON(TRAJ_DENSITY,{style:function(f){return {fillColor:colorForDensity(f.properties.count),color:'transparent',fillOpacity:0.35};},onEachFeature:function(f,l){l.bindPopup('Modeled air parcel density<br>count: '+f.properties.count);}});
+  var trajLineLayer=L.geoJSON(TRAJ_CENTERLINES,{style:function(){return {color:'#ade8f4',weight:2,dashArray:'6,4'};},onEachFeature:function(f,l){l.bindPopup('Back-trajectory (release height '+(f.properties.z0_m!=null?f.properties.z0_m:'?')+' m)<br>'+(TRAJ_HOURS!=null?TRAJ_HOURS+' h lookback':''));}});
   var venueMarker=L.circleMarker([VENUE.lat,VENUE.lon],{radius:10,color:'#fff',weight:3,fillColor:'#4dabf7',fillOpacity:1}).bindPopup('<b>'+VENUE.name+'</b>'+(VENUE.wind?('<br>Wind: '+VENUE.wind):''));
-  aqhiLayer.addTo(map);smokeLayer.addTo(map);paLayer.addTo(map);stationLayer.addTo(map);fireLayer.addTo(map);venueMarker.addTo(map);
-  L.control.layers(null,{'AQHI grid':aqhiLayer,'Smoke (PM2.5 model)':smokeLayer,'Community sensors':paLayer,'Official stations':stationLayer,'Active fires (NASA FIRMS)':fireLayer},{collapsed:false}).addTo(map);
+  aqhiLayer.addTo(map);smokeLayer.addTo(map);paLayer.addTo(map);stationLayer.addTo(map);fireLayer.addTo(map);trajDensityLayer.addTo(map);trajLineLayer.addTo(map);venueMarker.addTo(map);
+  L.control.layers(null,{'AQHI grid':aqhiLayer,'Smoke (PM2.5 model)':smokeLayer,'Community sensors':paLayer,'Official stations':stationLayer,'Active fires (NASA FIRMS)':fireLayer,'Wind trajectory density':trajDensityLayer,'Wind back-trajectory':trajLineLayer},{collapsed:false}).addTo(map);
 })();'''
 def build_map_section(cfg,p):
  mp=p.get('map') or {}
@@ -27,11 +30,15 @@ def build_map_section(cfg,p):
  aqhi_grid=mp.get('aqhi_grid') or {'type':'FeatureCollection','features':[]}
  purpleair=mp.get('purpleair') or []; stations=mp.get('stations') or []
  fire=((mp.get('fire') or {}).get('hotspots')) or []
- if not (firesmoke['features'] or aqhi_grid['features'] or purpleair or stations or fire):return ''
+ traj=mp.get('trajectory') or {}; traj_ok=traj.get('status')=='ok'
+ traj_lines=traj.get('centerlines') if traj_ok else {'type':'FeatureCollection','features':[]}
+ traj_density=traj.get('density') if traj_ok else {'type':'FeatureCollection','features':[]}
+ traj_hours=traj.get('hours') if traj_ok else None
+ if not (firesmoke['features'] or aqhi_grid['features'] or purpleair or stations or fire or traj_ok):return ''
  e=cfg['event']; c=(p.get('weather') or {}).get('current') or {}; wd=c.get('wind_direction_deg')
  wind_str=f"{c.get('wind_speed_kmh')} km/h from the {compass(wd)} (toward the {compass((wd+180)%360)})" if wd is not None and c.get('wind_speed_kmh') is not None else None
  venue={'name':e['name'],'lat':float(e['latitude']),'lon':float(e['longitude']),'wind':wind_str}
- data_js=(f"const FIRESMOKE={json.dumps(firesmoke)};\nconst AQHI_GRID={json.dumps(aqhi_grid)};\nconst PURPLEAIR={json.dumps(purpleair)};\nconst STATIONS={json.dumps(stations)};\nconst FIRE={json.dumps(fire)};\nconst VENUE={json.dumps(venue)};\n")
+ data_js=(f"const FIRESMOKE={json.dumps(firesmoke)};\nconst AQHI_GRID={json.dumps(aqhi_grid)};\nconst PURPLEAIR={json.dumps(purpleair)};\nconst STATIONS={json.dumps(stations)};\nconst FIRE={json.dumps(fire)};\nconst TRAJ_CENTERLINES={json.dumps(traj_lines)};\nconst TRAJ_DENSITY={json.dumps(traj_density)};\nconst TRAJ_HOURS={json.dumps(traj_hours)};\nconst VENUE={json.dumps(venue)};\n")
  return f'<section class="panel"><h2>Local area map</h2><div id="festmap" style="height:480px;border-radius:12px;overflow:hidden"></div><script>{data_js}{MAP_JS}</script></section>'
 def build_html(cfg,p):
  w=p['weather'];c=w['current'];aq=p['air_quality']['current'];fx=p['air_quality']['forecast'];a=p['assessment'];n=p['narrative']

@@ -47,6 +47,15 @@ cameras:
   radius_km: 15
   max_cameras: 4
 
+# Runs the AB_winds back-trajectory model locally (Supabase-fed HRDPS wind data).
+# SUPABASE_URL / SUPABASE_SERVICE_KEY come from the environment (intelligence.env), not here.
+wind_trajectory:
+  ab_winds_dir: "/opt/airquality/github/AB_winds"
+  python_bin: "/opt/airquality/venv/bin/python3"
+  hours: 6
+  timeout_seconds: 120
+  fire_path_threshold_km: 20
+
 thresholds:
   heat: {moderate_c: 27, high_c: 30, extreme_c: 35}
   wind_gust_kmh: {moderate: 45, high: 65, extreme: 90}
