@@ -6,8 +6,10 @@ def f(v,d=0):return 'unavailable' if v is None else f'{v:.{d}f}'
 def sensor_label(source):
     fam=(source or '').split('_')[0]
     return {'VIIRS':'NASA FIRMS – VIIRS','MODIS':'NASA FIRMS – MODIS','LANDSAT':'NASA FIRMS – Landsat'}.get(fam,'NASA FIRMS' if not fam else f'NASA FIRMS – {fam}')
-def build(cfg,w,aq,fx,a,fire=None,trajectory=None):
+def build(cfg,w,aq,fx,a,fire=None,trajectory=None,wx_alerts=None):
  c=w['current']; m=a['weather_metrics']; h=a['hazards']; parts=[f"At {cfg['event']['name']}, temperature is {f(c.get('temperature_c'),1)}°C and feels near {f(c.get('apparent_temperature_c'),1)}°C. Winds are {f(c.get('wind_speed_kmh'))} km/h from {compass(c.get('wind_direction_deg'))}, gusting near {f(c.get('wind_gust_kmh'))} km/h."]
+ wx=(wx_alerts or {}).get('alerts') or []
+ if wx:parts.append(f"Environment Canada has {len(wx)} active alert(s) in effect for the venue: {', '.join(sorted(set(x['name'] for x in wx)))}.")
  tz=cfg['project'].get('timezone','America/Edmonton')
  parts.append(f"The nearest current AQHI is {faqhi(aq.get('aqhi'))} at {aq.get('station_name','the nearest point')}, {f(aq.get('distance_km'),1)} km from the venue." if aq.get('aqhi') is not None else 'A valid current AQHI was not available.')
  blend=aq.get('blend') or {}
@@ -48,6 +50,7 @@ def build(cfg,w,aq,fx,a,fire=None,trajectory=None):
  if h['heat']['risk'] in ('HIGH','EXTREME'):rec.append('Increase hydration, shade, cooling and heat-illness messaging.')
  if h['wind']['risk'] in ('HIGH','EXTREME'):rec.append('Review temporary structures, signage and stage wind limits.')
  if h['precipitation']['risk'] in ('HIGH','EXTREME'):rec.append('Prepare drainage, electrical protection and wet-weather controls.')
+ if wx:rec.append(f"Active Environment Canada alert(s) for the venue — review details: {', '.join(sorted(set(x['name'] for x in wx)))}.")
  aqmsg=eccc_messages(h['air_quality']['risk'])
  if aqmsg:
   rec.append(f"Environment Canada AQHI guidance — general population: {aqmsg['general']}")
