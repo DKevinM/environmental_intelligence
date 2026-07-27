@@ -11,6 +11,7 @@ event:
   longitude: -114.0673
   local_radius_km: 10
   influence_radius_km: 20
+  concluded: true
 
 weather:
   forecast_hours: 24
